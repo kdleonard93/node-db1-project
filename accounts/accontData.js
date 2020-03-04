@@ -15,8 +15,9 @@ router.get("/", (req, res) => {
     });
 
   router.get("/:id", (req, res) => {
+    const id = req.params.id;
     db("accounts")
-      .where({ id: req.params.id })
+      .where({ id })
       .first()
       .then(account => {
         if (account) {
@@ -27,5 +28,54 @@ router.get("/", (req, res) => {
           });
         }
       });
+  });
+
+  router.post("/", (req, res) => {
+    if (accountIsValid(req.body)) {
+      db("accounts")
+        .insert(req.body, "id")
+        .then(([id]) => id)
+        .then(id => {
+          db("accounts")
+            .where({ id })
+            .first()
+            .then(account => {
+              res.status(201).json(account);
+            });
+        })
+        .catch(() => {
+          res.status(500).json({
+            message: "Could not add the account"
+          });
+        });
+    } else {
+      res.status(400).json({
+        message: "Please provide name and budget"
+      });
+    }
+  });
+
+  router.put("/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+      const accounts = await db("accounts")
+        .where("id", id)
+        .update(req.body);
+      res.status(200).json(accounts);
+    } catch (err) {
+      res.status(404).json({ message: "failed to find id" });
+    }
+  });
+
+  router.delete("/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+      const accounts = await db("accounts")
+        .where("id", id)
+        .delete(id);
+      res.status(204).json(accounts);
+    } catch (err) {
+      res.status(404).json({ message: "failed to find id" });
+    }
   });
 });
