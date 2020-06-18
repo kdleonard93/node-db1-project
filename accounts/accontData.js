@@ -65,13 +65,15 @@ router.get("/", (req, res) => {
     }
   });
 
-  router.delete("/:id", async (req, res) => {
-    const { id } = req.params;
-    try {
-      const accounts = await db("accounts").where("id", id).delete(id);
-      res.status(204).json(accounts);
-    } catch (err) {
-      res.status(404).json({ message: "failed to find id" });
-    }
+  router.delete("/:id", (req, res) => {
+    db("accounts")
+      .where({ id: req.params.id })
+      .del()
+      .then((count) => {
+        res.status(200).json({ message: `${count} record(s) deleted` });
+      })
+      .catch(() => {
+        res.status(500).json({ message: "Could not remove the account" });
+      });
   });
 });
